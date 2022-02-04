@@ -1,5 +1,6 @@
 import json
 import ast
+import numpy as np
 
 from funccalls import FuncCallVisitor
 
@@ -116,10 +117,12 @@ def count_var_edges(nb_vars):
             for j, other_cell in enumerate(nb_vars):
                 if (not i == j and v in other_cell):
                     count += 1
-        connections.append(count)
+        connections.append(count / len(nb_vars))
     
-    print(connections)
-    return connections
+    con_np = np.array(connections)
+    norm_score = con_np.mean()
+    
+    return connections, norm_score
 
 # count the number of times a local function has been invoked
 def count_func_edges(nb_funcs, nb_invos):
@@ -130,14 +133,29 @@ def count_func_edges(nb_funcs, nb_invos):
             for j, other_cell in enumerate(nb_invos):
                 if (v in other_cell):
                     count += 1
-        connections.append(count)
+        connections.append(count / len(nb_funcs))
     
-    print(connections)
-    return connections
+    con_np = np.array(connections)
+    norm_score = con_np.mean()
+    
+    return connections, norm_score
 
 # main
 if __name__ == "__main__":
     raw_nb = load_nb_json('sample_1.ipynb')
     nb_vars, nb_funcs, nb_invos = parse_nb(raw_nb)
-    count_var_edges(nb_vars)
-    count_func_edges(nb_funcs, nb_invos)
+    var_con, var_score = count_var_edges(nb_vars)
+    func_con, func_score = count_func_edges(nb_funcs, nb_invos)
+
+    print(var_con, func_con)
+
+    sum_con = [0] * len(var_con)
+    for i in range(len(var_con)):
+        sum_con[i] = var_con[i] + func_con[i]
+
+    print(sum_con)
+
+    sum_con_np = np.array(sum_con)
+    norm_score = sum_con_np.mean()
+
+    print(var_score, func_score, norm_score)
